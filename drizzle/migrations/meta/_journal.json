@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790066582601,
+      "tag": "0000_spaza_core_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790066612268,
+      "tag": "0001_seed_demo_inventory",
+      "breakpoints": true
+    }
+  ]
+}
