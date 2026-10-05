@@ -51,7 +51,7 @@ function ReportsPage() {
       let total = 0;
       for (const s of sales ?? []) {
         total += Number(s.total_amount);
-        daily[new Date(s.sale_date).getDate() - 1].total += Number(s.total_amount);
+        daily[new Date(s.sale_date).getDate() - 1]!.total += Number(s.total_amount);
         for (const it of s.sale_items) prod.set(it.product_name, (prod.get(it.product_name) ?? 0) + it.quantity);
       }
       const top = [...prod.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);

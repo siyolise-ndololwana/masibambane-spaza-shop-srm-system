@@ -44,6 +44,50 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_log: {
+        Row: {
+          change: number
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_quantity: number
+          old_quantity: number
+          product_id: string | null
+          product_name: string
+          reason: string
+        }
+        Insert: {
+          change: number
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_quantity: number
+          old_quantity?: number
+          product_id?: string | null
+          product_name: string
+          reason: string
+        }
+        Update: {
+          change?: number
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_quantity?: number
+          old_quantity?: number
+          product_id?: string | null
+          product_name?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string
