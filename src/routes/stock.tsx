@@ -118,7 +118,7 @@ function StockPage() {
                   >
                     {p.quantity} in stock
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Reorder at {p.reorder_level}</p>
+                  <ThresholdDialog product={p} onDone={() => qc.invalidateQueries()} />
                 </div>
               </div>
             );
@@ -258,6 +258,15 @@ function ReceiveStockDialog({
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unitCost, setUnitCost] = useState("");
+  const [supplierId, setSupplierId] = useState("");
+  const { data: suppliers } = useQuery({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -265,6 +274,7 @@ function ReceiveStockDialog({
         product_id: productId,
         quantity: Number(quantity),
         unit_cost: Number(unitCost || 0),
+        supplier_id: supplierId || null,
       });
       if (error) throw error;
     },
@@ -306,6 +316,21 @@ function ReceiveStockDialog({
               ))}
             </select>
           </div>
+          <div className="space-y-1.5">
+            <Label>Supplier</Label>
+            <select
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm"
+            >
+              <option value="">Choose a supplier</option>
+              {(suppliers ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Quantity received</Label>
@@ -333,6 +358,60 @@ function ReceiveStockDialog({
             onClick={() => mutation.mutate()}
           >
             Save delivery
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ThresholdDialog({ product, onDone }: { product: ProductRow; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [level, setLevel] = useState(String(product.reorder_level));
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("products")
+        .update({ reorder_level: Math.max(0, Math.floor(Number(level))) })
+        .eq("id", product.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`Alert level for ${product.name} updated`);
+      setOpen(false);
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) setLevel(String(product.reorder_level));
+      }}
+    >
+      <DialogTrigger asChild>
+        <button className="text-[10px] font-semibold text-primary underline-offset-2 hover:underline">
+          Alert at {product.reorder_level} ✎
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Low-stock alert for {product.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label>Warn me when stock drops to</Label>
+          <Input type="number" min={0} value={level} onChange={(e) => setLevel(e.target.value)} />
+          <p className="text-xs text-muted-foreground">Currently {product.quantity} in stock.</p>
+        </div>
+        <DialogFooter>
+          <Button
+            className="w-full"
+            disabled={level === "" || Number(level) < 0 || mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            Save alert level
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -7,6 +7,113 @@ import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { rand } from "@/lib/format";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { exportCSV, exportPDF, type Cell } from "@/lib/export";
+
+type Kind = "sales" | "expenses" | "orders";
+
+async function buildReport(kind: Kind, month: string) {
+  const start = new Date(`${month}-01T00:00:00`);
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+  const d = (iso: string) => new Date(iso).toLocaleDateString("en-ZA");
+  const n = (v: number) => Number(v).toFixed(2);
+  if (kind === "sales") {
+    const { data, error } = await supabase
+      .from("sales")
+      .select("sale_date, payment_method, total_amount, sale_items(product_name, quantity, unit_price, total_price)")
+      .gte("sale_date", start.toISOString())
+      .lt("sale_date", end.toISOString())
+      .order("sale_date");
+    if (error) throw error;
+    const rows: Cell[][] = [];
+    let total = 0;
+    for (const s of data ?? []) {
+      total += Number(s.total_amount);
+      for (const it of s.sale_items)
+        rows.push([d(s.sale_date), it.product_name, it.quantity, n(it.unit_price), n(it.total_price), s.payment_method]);
+    }
+    return {
+      title: "Monthly Sales Report",
+      headers: ["Date", "Product", "Qty", "Unit price (R)", "Line total (R)", "Payment"],
+      rows,
+      summary: [`Sales: ${data?.length ?? 0}`, `Total sales: ${rand(total)}`],
+    };
+  }
+  if (kind === "expenses") {
+    const { data, error } = await supabase
+      .from("expenses")
+      .select("expense_date, description, category, amount")
+      .gte("expense_date", start.toISOString().slice(0, 10))
+      .lt("expense_date", end.toISOString().slice(0, 10))
+      .order("expense_date");
+    if (error) throw error;
+    const total = (data ?? []).reduce((s, e) => s + Number(e.amount), 0);
+    return {
+      title: "Monthly Expense Report",
+      headers: ["Date", "Description", "Category", "Amount (R)"],
+      rows: (data ?? []).map((e) => [d(e.expense_date), e.description, e.category, n(e.amount)]),
+      summary: [`Total expenses: ${rand(total)}`],
+    };
+  }
+  const { data, error } = await supabase
+    .from("stock_deliveries")
+    .select("date_received, quantity, unit_cost, products(name), suppliers(name)")
+    .gte("date_received", start.toISOString())
+    .lt("date_received", end.toISOString())
+    .order("date_received");
+  if (error) throw error;
+  const total = (data ?? []).reduce((s, o) => s + o.quantity * Number(o.unit_cost), 0);
+  return {
+    title: "Stock Order Report",
+    headers: ["Order date", "Supplier", "Product", "Qty", "Unit price (R)", "Total (R)"],
+    rows: (data ?? []).map((o) => [
+      d(o.date_received),
+      o.suppliers?.name ?? "Not set",
+      o.products?.name ?? "—",
+      o.quantity,
+      n(o.unit_cost),
+      n(o.quantity * Number(o.unit_cost)),
+    ]),
+    summary: [`Orders: ${data?.length ?? 0}`, `Total spent on stock: ${rand(total)}`],
+  };
+}
+
+function ExportPanel({ month, label }: { month: string; label: string }) {
+  const [busy, setBusy] = useState(false);
+  const run = async (kind: Kind, fmt: "pdf" | "csv") => {
+    setBusy(true);
+    try {
+      const r = await buildReport(kind, month);
+      const file = `${kind}-report-${month}`;
+      if (fmt === "csv") exportCSV(file, r.headers, r.rows);
+      else await exportPDF(file, r.title, label, r.headers, r.rows, r.summary);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const items: { kind: Kind; name: string }[] = [
+    { kind: "sales", name: "Sales" },
+    { kind: "expenses", name: "Expenses" },
+    { kind: "orders", name: "Stock orders" },
+  ];
+  return (
+    <div className="space-y-2 rounded-2xl border border-border bg-surface p-4">
+      <p className="text-sm font-semibold">Download reports for {label}</p>
+      {items.map((it) => (
+        <div key={it.kind} className="flex items-center justify-between">
+          <span className="text-sm">{it.name}</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => run(it.kind, "pdf")}>PDF</Button>
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => run(it.kind, "csv")}>CSV</Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
@@ -81,6 +188,7 @@ function ReportsPage() {
             </BarChart>
           </ResponsiveContainer>
         </div>
+        <ExportPanel month={month} label={label} />
         {data && (
           <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 text-sm">
             <p>
