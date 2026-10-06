@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { shortDate, shortTime } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { exportCSV, exportPDF, type Cell } from "@/lib/export";
 
 export const Route = createFileRoute("/activity")({
   head: () => ({
@@ -21,6 +25,7 @@ export const Route = createFileRoute("/activity")({
 
 function ActivityPage() {
   const { user, loading } = useRequireAuth();
+  const [busy, setBusy] = useState(false);
   const { data } = useQuery({
     queryKey: ["inventory_log"],
     enabled: !!user,
