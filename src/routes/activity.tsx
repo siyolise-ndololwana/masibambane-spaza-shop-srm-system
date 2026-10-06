@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { shortDate, shortTime } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { exportCSV, exportPDF, type Cell } from "@/lib/export";
 
 export const Route = createFileRoute("/activity")({
   head: () => ({
@@ -21,6 +25,7 @@ export const Route = createFileRoute("/activity")({
 
 function ActivityPage() {
   const { user, loading } = useRequireAuth();
+  const [busy, setBusy] = useState(false);
   const { data } = useQuery({
     queryKey: ["inventory_log"],
     enabled: !!user,
@@ -35,10 +40,51 @@ function ActivityPage() {
     },
   });
   if (loading) return null;
+
+  type LogRow = NonNullable<typeof data>[number];
+  const runExport = async (fmt: "pdf" | "csv") => {
+    setBusy(true);
+    try {
+      const rows: Cell[][] = (data ?? []).map((l: LogRow) => [
+        shortDate(l.changed_at),
+        shortTime(l.changed_at),
+        l.product_name,
+        `${l.change > 0 ? "+" : ""}${l.change}`,
+        `${l.old_quantity} → ${l.new_quantity}`,
+        l.reason,
+        l.who,
+      ]);
+      const added = (data ?? []).filter((l: LogRow) => l.change > 0).reduce((s, l) => s + l.change, 0);
+      const removed = (data ?? []).filter((l: LogRow) => l.change < 0).reduce((s, l) => s + l.change, 0);
+      const summary = [
+        `Entries: ${data?.length ?? 0}`,
+        `Stock added: ${added} • Stock removed: ${Math.abs(removed)}`,
+      ];
+      const headers = ["Date", "Time", "Product", "Change", "Qty before → after", "Reason", "Staff member"];
+      const file = `stock-activity-log-${new Date().toISOString().slice(0, 10)}`;
+      if (fmt === "csv") exportCSV(file, headers, rows);
+      else await exportPDF(file, "Stock Activity Log", `Exported ${shortDate(new Date().toISOString())}`, headers, rows, summary);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <AppShell>
       <div className="space-y-5">
-        <h2 className="text-xl font-bold">Stock activity</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xl font-bold">Stock activity</h2>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" variant="outline" disabled={busy || !data?.length} onClick={() => runExport("pdf")}>
+              PDF
+            </Button>
+            <Button size="sm" variant="outline" disabled={busy || !data?.length} onClick={() => runExport("csv")}>
+              CSV
+            </Button>
+          </div>
+        </div>
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           {(data ?? []).map((l, i) => (
             <div key={l.id} className={`flex justify-between p-4 ${i ? "border-t border-border" : ""}`}>
