@@ -57,7 +57,7 @@ export async function exportPDF(
       doc.addPage();
       y = 16;
     }
-    doc.text(line, 14, y);
+    doc.text(pdfSafe(line), 14, y);
     y += 6;
   }
   doc.save(`${filename}.pdf`);
