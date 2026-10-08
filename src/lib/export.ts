@@ -80,5 +80,6 @@ export async function exportPDF(
     doc.text(pdfSafe(line), 14, y);
     y += 6;
   }
-  doc.save(`${filename}.pdf`);
+  const blob = doc.output("blob");
+  await downloadAndShare(blob, `${filename}.pdf`, title);
 }
