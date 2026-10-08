@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { rand, shortTime } from "@/lib/format";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -150,6 +151,8 @@ function Dashboard() {
           </div>
         </section>
 
+        <ProductFlow enabled={!!user} />
+
         <section className="space-y-3">
           <h2 className="font-bold">Recent Sales</h2>
           <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -176,5 +179,118 @@ function Dashboard() {
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function ProductFlow({ enabled }: { enabled: boolean }) {
+  const { data } = useQuery({
+    queryKey: ["dashboard-flow"],
+    enabled,
+    queryFn: async () => {
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
+      since.setDate(since.getDate() - 29);
+      const [items, deliveries, sales] = await Promise.all([
+        supabase.from("sale_items").select("product_name, quantity, total_price, sales!inner(sale_date)").gte("sales.sale_date", since.toISOString()),
+        supabase.from("stock_deliveries").select("quantity, unit_cost, products(name)").gte("date_received", since.toISOString()),
+        supabase.from("sales").select("total_amount, sale_date").gte("sale_date", since.toISOString()),
+      ]);
+      const map = new Map<string, { name: string; bought: number; spent: number; sold: number; revenue: number }>();
+      const get = (n: string) => {
+        if (!map.has(n)) map.set(n, { name: n, bought: 0, spent: 0, sold: 0, revenue: 0 });
+        return map.get(n)!;
+      };
+      for (const i of items.data ?? []) {
+        const r = get(i.product_name);
+        r.sold += i.quantity;
+        r.revenue += Number(i.total_price);
+      }
+      for (const d of deliveries.data ?? []) {
+        const r = get(d.products?.name ?? "Unknown");
+        r.bought += d.quantity;
+        r.spent += d.quantity * Number(d.unit_cost);
+      }
+      const days: { day: string; total: number }[] = [];
+      for (let k = 6; k >= 0; k--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - k);
+        const end = new Date(d);
+        end.setDate(end.getDate() + 1);
+        const total = (sales.data ?? [])
+          .filter((s) => new Date(s.sale_date) >= d && new Date(s.sale_date) < end)
+          .reduce((a, s) => a + Number(s.total_amount), 0);
+        days.push({ day: d.toLocaleDateString("en-ZA", { day: "2-digit", month: "short" }), total });
+      }
+      const rows = [...map.values()].sort((a, b) => b.revenue + b.spent - (a.revenue + a.spent));
+      return {
+        days,
+        rows,
+        revenue: rows.reduce((a, r) => a + r.revenue, 0),
+        spent: rows.reduce((a, r) => a + r.spent, 0),
+      };
+    },
+  });
+
+  return (
+    <>
+      <section className="space-y-3">
+        <h2 className="font-bold">Sales — last 7 days</h2>
+        <div className="h-48 rounded-2xl border border-border bg-surface p-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data?.days ?? []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="day" fontSize={10} stroke="var(--muted-foreground)" />
+              <YAxis fontSize={10} width={44} stroke="var(--muted-foreground)" />
+              <Tooltip formatter={(v) => rand(Number(v))} />
+              <Bar dataKey="total" fill="var(--primary)" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-bold">Bought vs sold — last 30 days</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <p className="text-xs text-muted-foreground">Stock purchased</p>
+            <p className="text-lg font-bold">{rand(data?.spent ?? 0)}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <p className="text-xs text-muted-foreground">Sales income</p>
+            <p className="text-lg font-bold text-success">{rand(data?.revenue ?? 0)}</p>
+          </div>
+        </div>
+        <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
+          <table className="w-full text-xs">
+            <thead className="bg-secondary text-muted-foreground">
+              <tr>
+                <th className="p-3 text-left">Product</th>
+                <th className="p-3 text-right">Bought</th>
+                <th className="p-3 text-right">Cost</th>
+                <th className="p-3 text-right">Sold</th>
+                <th className="p-3 text-right">Income</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data?.rows ?? []).map((r) => (
+                <tr key={r.name} className="border-t border-border">
+                  <td className="p-3 font-semibold">{r.name}</td>
+                  <td className="p-3 text-right">{r.bought}</td>
+                  <td className="p-3 text-right">{rand(r.spent)}</td>
+                  <td className="p-3 text-right">{r.sold}</td>
+                  <td className="p-3 text-right font-semibold">{rand(r.revenue)}</td>
+                </tr>
+              ))}
+              {data && data.rows.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-4 text-muted-foreground">No purchases or sales in the last 30 days.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
   );
 }
