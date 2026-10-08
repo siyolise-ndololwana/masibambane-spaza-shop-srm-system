@@ -32,7 +32,11 @@ export function exportCSV(filename: string, headers: string[], rows: Cell[][]) {
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
-  download(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }), `${filename}.csv`);
+  void downloadAndShare(
+    new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }),
+    `${filename}.csv`,
+    filename,
+  );
 }
 
 export async function exportPDF(
