@@ -27,19 +27,25 @@ export async function exportPDF(
   rows: Cell[][],
   summary: string[],
 ) {
+  // jsPDF's built-in fonts only cover Latin-1; map or strip anything else
+  // (e.g. "→" renders as a broken glyph otherwise).
+  const pdfSafe = (v: Cell | string) =>
+    String(v)
+      .replace(/→/g, "->")
+      .replace(/[^\u0000-\u00ff]/g, "");
   const { jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
   doc.setFontSize(16);
-  doc.text("Masibambane Spaza Shop", 14, 16);
+  doc.text(pdfSafe("Masibambane Spaza Shop"), 14, 16);
   doc.setFontSize(12);
-  doc.text(title, 14, 24);
+  doc.text(pdfSafe(title), 14, 24);
   doc.setFontSize(9);
-  doc.text(subtitle, 14, 30);
+  doc.text(pdfSafe(subtitle), 14, 30);
   autoTable(doc, {
     startY: 35,
-    head: [headers],
-    body: rows.map((r) => r.map(String)),
+    head: [headers.map(pdfSafe)],
+    body: rows.map((r) => r.map(pdfSafe)),
     styles: { fontSize: 8 },
     headStyles: { fillColor: [79, 70, 229] },
   });
@@ -51,7 +57,7 @@ export async function exportPDF(
       doc.addPage();
       y = 16;
     }
-    doc.text(line, 14, y);
+    doc.text(pdfSafe(line), 14, y);
     y += 6;
   }
   doc.save(`${filename}.pdf`);
