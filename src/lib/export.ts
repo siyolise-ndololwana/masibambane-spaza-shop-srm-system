@@ -9,6 +9,22 @@ function download(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// Always save the file, then open the device share sheet when the browser
+// supports sharing files (e.g. phone browsers) so the report can be sent
+// through Gmail, WhatsApp, etc. Desktop browsers without file sharing just
+// get the download.
+async function downloadAndShare(blob: Blob, filename: string, title: string) {
+  download(blob, filename);
+  try {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title, text: title });
+    }
+  } catch {
+    // Share cancelled or unavailable — the download already happened.
+  }
+}
+
 export function exportCSV(filename: string, headers: string[], rows: Cell[][]) {
   const esc = (v: Cell) => {
     let s = String(v);
