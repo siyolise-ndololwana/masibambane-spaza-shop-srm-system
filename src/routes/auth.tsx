@@ -95,6 +95,7 @@ function AuthPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Thabo Mokoena"
+                autoComplete="name"
                 required
               />
             </div>
@@ -107,6 +108,7 @@ function AuthPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@shop.co.za"
+              autoComplete="email"
               required
             />
           </div>
@@ -118,6 +120,7 @@ function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
               minLength={6}
               required
             />

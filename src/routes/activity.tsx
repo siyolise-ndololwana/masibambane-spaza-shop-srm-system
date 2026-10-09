@@ -6,6 +6,7 @@ import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { shortDate, shortTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { exportCSV, exportPDF, type Cell } from "@/lib/export";
 
@@ -26,12 +27,21 @@ export const Route = createFileRoute("/activity")({
 function ActivityPage() {
   const { user, loading } = useRequireAuth();
   const [busy, setBusy] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const { data } = useQuery({
-    queryKey: ["inventory_log"],
+    queryKey: ["inventory_log", from, to],
     enabled: !!user,
     queryFn: async () => {
+      let q = supabase.from("inventory_log").select("*").order("changed_at", { ascending: false }).limit(1000);
+      if (from) q = q.gte("changed_at", new Date(`${from}T00:00:00`).toISOString());
+      if (to) {
+        const end = new Date(`${to}T00:00:00`);
+        end.setDate(end.getDate() + 1);
+        q = q.lt("changed_at", end.toISOString());
+      }
       const [{ data: log, error }, { data: people }] = await Promise.all([
-        supabase.from("inventory_log").select("*").order("changed_at", { ascending: false }).limit(200),
+        q,
         supabase.from("profiles").select("id, full_name"),
       ]);
       if (error) throw error;
@@ -61,7 +71,9 @@ function ActivityPage() {
         `Stock added: ${added} • Stock removed: ${Math.abs(removed)}`,
       ];
       const headers = ["Date", "Time", "Product", "Change", "Qty before → after", "Reason", "Staff member"];
-      const file = `stock-activity-log-${new Date().toISOString().slice(0, 10)}`;
+      const period = from || to ? `${from || "start"} to ${to || "today"}` : "All dates";
+      summary.unshift(`Period: ${period}`);
+      const file = `stock-activity-log-${from || to ? `${from || "start"}_to_${to || "today"}` : new Date().toISOString().slice(0, 10)}`;
       if (fmt === "csv") exportCSV(file, headers, rows);
       else await exportPDF(file, "Stock Activity Log", `Exported ${shortDate(new Date().toISOString())}`, headers, rows, summary);
     } catch (e) {
@@ -84,6 +96,10 @@ function ActivityPage() {
               CSV
             </Button>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <label className="flex-1 text-xs">From<Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="bg-surface" /></label>
+          <label className="flex-1 text-xs">To<Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="bg-surface" /></label>
         </div>
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           {(data ?? []).map((l, i) => (
