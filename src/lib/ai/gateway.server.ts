@@ -44,5 +44,5 @@ export async function summarizeWithAI(instructions: string, prompt: string) {
     if (e?.statusCode === 402) throw new Error("AI credits have run out. Add credits to keep using AI summaries.");
     throw new Error(e?.message || "The AI could not produce a summary.");
   }
-  return text;
+  return text.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim();
 }
