@@ -13,9 +13,10 @@ import { exportCSV, exportPDF, type Cell } from "@/lib/export";
 
 type Kind = "sales" | "expenses" | "orders";
 
-async function buildReport(kind: Kind, month: string) {
-  const start = new Date(`${month}-01T00:00:00`);
-  const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+async function buildReport(kind: Kind, from: string, to: string) {
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+  end.setDate(end.getDate() + 1);
   const d = (iso: string) => new Date(iso).toLocaleDateString("en-ZA");
   const n = (v: number) => Number(v).toFixed(2);
   if (kind === "sales") {
@@ -44,8 +45,8 @@ async function buildReport(kind: Kind, month: string) {
     const { data, error } = await supabase
       .from("expenses")
       .select("expense_date, description, category, amount")
-      .gte("expense_date", start.toISOString().slice(0, 10))
-      .lt("expense_date", end.toISOString().slice(0, 10))
+      .gte("expense_date", from)
+      .lte("expense_date", to)
       .order("expense_date");
     if (error) throw error;
     const total = (data ?? []).reduce((s, e) => s + Number(e.amount), 0);
@@ -79,13 +80,20 @@ async function buildReport(kind: Kind, month: string) {
   };
 }
 
-function ExportPanel({ month, label }: { month: string; label: string }) {
+function ExportPanel({ month }: { month: string }) {
   const [busy, setBusy] = useState(false);
+  const [from, setFrom] = useState(`${month}-01`);
+  const [to, setTo] = useState(() => {
+    const [y, m] = month.split("-").map(Number);
+    return `${month}-${String(new Date(y!, m!, 0).getDate()).padStart(2, "0")}`;
+  });
+  const label = `${new Date(from).toLocaleDateString("en-ZA")} – ${new Date(to).toLocaleDateString("en-ZA")}`;
   const run = async (kind: Kind, fmt: "pdf" | "csv") => {
     setBusy(true);
     try {
-      const r = await buildReport(kind, month);
-      const file = `${kind}-report-${month}`;
+      if (from > to) throw new Error("Start date must be before end date");
+      const r = await buildReport(kind, from, to);
+      const file = `${kind}-report-${from}_to_${to}`;
       if (fmt === "csv") exportCSV(file, r.headers, r.rows);
       else await exportPDF(file, r.title, label, r.headers, r.rows, r.summary);
     } catch (e) {
@@ -101,7 +109,11 @@ function ExportPanel({ month, label }: { month: string; label: string }) {
   ];
   return (
     <div className="space-y-2 rounded-2xl border border-border bg-surface p-4">
-      <p className="text-sm font-semibold">Download reports for {label}</p>
+      <p className="text-sm font-semibold">Download reports</p>
+      <div className="flex gap-2">
+        <label className="flex-1 text-xs">From<Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="flex-1 text-xs">To<Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+      </div>
       {items.map((it) => (
         <div key={it.kind} className="flex items-center justify-between">
           <span className="text-sm">{it.name}</span>
@@ -188,7 +200,7 @@ function ReportsPage() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <ExportPanel month={month} label={label} />
+        <ExportPanel key={month} month={month} />
         {data && (
           <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 text-sm">
             <p>
