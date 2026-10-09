@@ -270,6 +270,63 @@ export type Database = {
           },
         ]
       }
+      stock_orders: {
+        Row: {
+          created_at: string
+          deadline: string
+          id: string
+          notes: string | null
+          ordered_by: string | null
+          product_id: string
+          quantity: number
+          received_at: string | null
+          status: string
+          supplier_id: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          deadline: string
+          id?: string
+          notes?: string | null
+          ordered_by?: string | null
+          product_id: string
+          quantity: number
+          received_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          deadline?: string
+          id?: string
+          notes?: string | null
+          ordered_by?: string | null
+          product_id?: string
+          quantity?: number
+          received_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
