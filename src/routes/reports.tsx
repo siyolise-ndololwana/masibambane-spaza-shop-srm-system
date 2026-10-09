@@ -9,6 +9,8 @@ import { rand } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { getSalesInsights } from "@/lib/ai/sales-insights.functions";
 import { exportCSV, exportPDF, type Cell } from "@/lib/export";
 
 type Kind = "sales" | "expenses" | "orders";
@@ -127,6 +129,40 @@ function ExportPanel({ month }: { month: string }) {
   );
 }
 
+function AIInsights({ month }: { month: string }) {
+  const [from, setFrom] = useState(`${month}-01`);
+  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [busy, setBusy] = useState(false);
+  const [text, setText] = useState("");
+  const run = useServerFn(getSalesInsights);
+  const go = async () => {
+    setBusy(true);
+    setText("");
+    try {
+      const r = await run({ data: { from, to } });
+      setText(r.summary);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="space-y-2 rounded-2xl border border-border bg-surface p-4">
+      <p className="text-sm font-semibold">AI sales insights</p>
+      <p className="text-xs text-muted-foreground">Pick a period and get a plain-language summary of trends with suggested actions.</p>
+      <div className="flex gap-2">
+        <label className="flex-1 text-xs">From<Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="flex-1 text-xs">To<Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+      </div>
+      <Button className="w-full" disabled={busy || from > to} onClick={go}>
+        {busy ? "Analysing sales…" : "Summarise with AI"}
+      </Button>
+      {text && <div className="whitespace-pre-wrap rounded-xl bg-muted p-3 text-sm">{text}</div>}
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/reports")({
   head: () => ({
     meta: [
@@ -201,6 +237,7 @@ function ReportsPage() {
           </ResponsiveContainer>
         </div>
         <ExportPanel key={month} month={month} />
+        <AIInsights key={`ai-${month}`} month={month} />
         {data && (
           <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 text-sm">
             <p>
