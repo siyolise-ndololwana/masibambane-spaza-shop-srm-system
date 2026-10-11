@@ -16,6 +16,7 @@ import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as StockRouteImport } from './routes/stock'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as SalesIndexRouteImport } from './routes/sales.index'
@@ -56,6 +57,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StockRoute = StockRouteImport.update({
   id: '/stock',
   path: '/stock',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/reports': typeof ReportsRoute
+  '/security': typeof SecurityRoute
   '/stock': typeof StockRoute
   '/suppliers': typeof SuppliersRoute
   '/sales/new': typeof SalesNewRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/reports': typeof ReportsRoute
+  '/security': typeof SecurityRoute
   '/stock': typeof StockRoute
   '/suppliers': typeof SuppliersRoute
   '/sales/new': typeof SalesNewRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/reports': typeof ReportsRoute
+  '/security': typeof SecurityRoute
   '/stock': typeof StockRoute
   '/suppliers': typeof SuppliersRoute
   '/sales/new': typeof SalesNewRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/reports'
+    | '/security'
     | '/stock'
     | '/suppliers'
     | '/sales/new'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/reports'
+    | '/security'
     | '/stock'
     | '/suppliers'
     | '/sales/new'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/reports'
+    | '/security'
     | '/stock'
     | '/suppliers'
     | '/sales/new'
@@ -167,6 +179,7 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
   ReportsRoute: typeof ReportsRoute
+  SecurityRoute: typeof SecurityRoute
   StockRoute: typeof StockRoute
   SuppliersRoute: typeof SuppliersRoute
   SalesNewRoute: typeof SalesNewRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stock': {
       id: '/stock'
       path: '/stock'
@@ -263,6 +283,7 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
   ReportsRoute: ReportsRoute,
+  SecurityRoute: SecurityRoute,
   StockRoute: StockRoute,
   SuppliersRoute: SuppliersRoute,
   SalesNewRoute: SalesNewRoute,
