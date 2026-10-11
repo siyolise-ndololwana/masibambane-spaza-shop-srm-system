@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, needsSecondStep } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,11 +31,14 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mfa, setMfa] = useState(false);
+  const [code, setCode] = useState("");
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/" });
+    if (!loading && user)
+      needsSecondStep().then((need) => (need ? setMfa(true) : navigate({ to: "/" })));
   }, [loading, user, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,7 +48,8 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        if (await needsSecondStep()) setMfa(true);
+        else navigate({ to: "/" });
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -69,6 +73,40 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const { data } = await supabase.auth.mfa.listFactors();
+      const factor = data?.totp.find((f) => f.status === "verified");
+      if (!factor) throw new Error("No authenticator app found for this account.");
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.trim() });
+      if (error) throw error;
+      navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Wrong code");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (mfa)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <form onSubmit={verifyCode} className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-card">
+          <h1 className="text-xl font-bold">Two-step verification</h1>
+          <p className="text-sm text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+          <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" required />
+          <Button type="submit" className="w-full" disabled={busy || code.trim().length !== 6}>
+            {busy ? "Checking…" : "Verify"}
+          </Button>
+          <button type="button" className="w-full text-xs text-primary" onClick={async () => { await supabase.auth.signOut(); setMfa(false); setCode(""); }}>
+            Use a different account
+          </button>
+        </form>
+      </div>
+    );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
