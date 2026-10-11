@@ -66,7 +66,7 @@ function OrdersPage() {
       deadline: form.deadline,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Order placed");
     setForm({ supplier_id: "", product_id: "", quantity: "", unit_price: "", deadline: "" });
     qc.invalidateQueries({ queryKey: ["stock_orders"] });
@@ -74,7 +74,7 @@ function OrdersPage() {
 
   const setStatus = async (id: string, status: "received" | "cancelled") => {
     const { error } = await supabase.from("stock_orders").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(status === "received" ? "Stock added and recorded in the activity log" : "Order cancelled");
     qc.invalidateQueries();
   };
