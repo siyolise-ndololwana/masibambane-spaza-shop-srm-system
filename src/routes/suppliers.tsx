@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { rand, shortDate } from "@/lib/format";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,9 +13,9 @@ export const Route = createFileRoute("/suppliers")({
   head: () => ({
     meta: [
       { title: "Suppliers — Masibambane Spaza" },
-      { name: "description", content: "Supplier names and contact details." },
+      { name: "description", content: "Suppliers, their orders, pending deliveries and order costs." },
       { property: "og:title", content: "Suppliers — Masibambane Spaza" },
-      { property: "og:description", content: "Supplier names and contact details." },
+      { property: "og:description", content: "Suppliers, their orders, pending deliveries and order costs." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -30,9 +31,15 @@ function SuppliersPage() {
     queryKey: ["suppliers"],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("*").order("name");
+      const [{ data, error }, { data: orders }] = await Promise.all([
+        supabase.from("suppliers").select("*").order("name"),
+        supabase
+          .from("stock_orders")
+          .select("id, supplier_id, quantity, unit_price, deadline, status, created_at, products(name)")
+          .order("created_at", { ascending: false }),
+      ]);
       if (error) throw error;
-      return data;
+      return data.map((sup) => ({ ...sup, orders: (orders ?? []).filter((o) => o.supplier_id === sup.id) }));
     },
   });
   const add = useMutation({
@@ -67,14 +74,49 @@ function SuppliersPage() {
           </Button>
         </div>
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-          {(data ?? []).map((s, i) => (
-            <div key={s.id} className={`p-4 ${i ? "border-t border-border" : ""}`}>
-              <p className="text-sm font-semibold">{s.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {[s.contact_person, s.phone, s.email].filter(Boolean).join(" • ") || "No contact details"}
-              </p>
-            </div>
-          ))}
+          {(data ?? []).map((s, i) => {
+            const today = new Date().toISOString().slice(0, 10);
+            const cost = (o: { quantity: number; unit_price: number }) => o.quantity * Number(o.unit_price);
+            const pending = s.orders.filter((o) => o.status === "pending");
+            const spent = s.orders.filter((o) => o.status !== "cancelled").reduce((t, o) => t + cost(o), 0);
+            return (
+              <details key={s.id} className={`p-4 ${i ? "border-t border-border" : ""}`}>
+                <summary className="cursor-pointer list-none">
+                  <p className="text-sm font-semibold">{s.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {[s.contact_person, s.phone, s.email].filter(Boolean).join(" • ") || "No contact details"}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    {s.orders.length} orders • {pending.length} pending ({rand(pending.reduce((t, o) => t + cost(o), 0))}) • total {rand(spent)}
+                  </p>
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {s.orders.map((o) => {
+                    const late = o.status === "pending" && o.deadline < today;
+                    return (
+                      <div key={o.id} className="flex justify-between gap-2 rounded-lg bg-muted p-2 text-xs">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{o.products?.name ?? "—"} × {o.quantity}</p>
+                          <p className="text-muted-foreground">Ordered {shortDate(o.created_at)} • due {shortDate(o.deadline)}</p>
+                          {o.status === "received" && (
+                            <Link to="/activity" className="font-medium text-primary">View in activity log →</Link>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{rand(cost(o))}</p>
+                          <p className={late ? "text-destructive" : o.status === "received" ? "text-success" : "text-muted-foreground"}>
+                            {late ? "Overdue" : o.status[0]!.toUpperCase() + o.status.slice(1)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {s.orders.length === 0 && <p className="text-xs text-muted-foreground">No orders yet.</p>}
+                  <Link to="/orders" className="block text-xs font-medium text-primary">Place an order →</Link>
+                </div>
+              </details>
+            );
+          })}
         </div>
       </div>
     </AppShell>

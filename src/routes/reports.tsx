@@ -44,19 +44,42 @@ async function buildReport(kind: Kind, from: string, to: string) {
     };
   }
   if (kind === "expenses") {
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("expense_date, description, category, amount")
-      .gte("expense_date", from)
-      .lte("expense_date", to)
-      .order("expense_date");
+    const [{ data, error }, { data: orders, error: oErr }] = await Promise.all([
+      supabase
+        .from("expenses")
+        .select("expense_date, description, category, amount")
+        .gte("expense_date", from)
+        .lte("expense_date", to)
+        .order("expense_date"),
+      supabase
+        .from("stock_orders")
+        .select("created_at, quantity, unit_price, status, products(name), suppliers(name)")
+        .neq("status", "cancelled")
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString())
+        .order("created_at"),
+    ]);
     if (error) throw error;
+    if (oErr) throw oErr;
     const total = (data ?? []).reduce((s, e) => s + Number(e.amount), 0);
+    const orderTotal = (orders ?? []).reduce((s, o) => s + o.quantity * Number(o.unit_price), 0);
     return {
-      title: "Monthly Expense Report",
+      title: "Expense Report",
       headers: ["Date", "Description", "Category", "Amount (R)"],
-      rows: (data ?? []).map((e) => [d(e.expense_date), e.description, e.category, n(e.amount)]),
-      summary: [`Total expenses: ${rand(total)}`],
+      rows: [
+        ...(data ?? []).map((e) => [d(e.expense_date), e.description, e.category, n(e.amount)] as Cell[]),
+        ...(orders ?? []).map((o) => [
+          d(o.created_at),
+          `${o.products?.name ?? "Product"} x ${o.quantity} from ${o.suppliers?.name ?? "supplier"} (${o.status})`,
+          "Stock order",
+          n(o.quantity * Number(o.unit_price)),
+        ] as Cell[]),
+      ],
+      summary: [
+        `Shop expenses: ${rand(total)}`,
+        `Stock orders: ${rand(orderTotal)}`,
+        `Total: ${rand(total + orderTotal)}`,
+      ],
     };
   }
   const { data, error } = await supabase
