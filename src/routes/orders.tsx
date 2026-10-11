@@ -86,6 +86,18 @@ function OrdersPage() {
     <AppShell>
       <div className="space-y-5">
         <h2 className="text-xl font-bold">Stock orders</h2>
+        {data && (
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-2xl border border-border bg-surface p-3">
+              <p className="text-xs text-muted-foreground">Pending orders cost</p>
+              <p className="text-lg font-bold">{rand(data.orders.filter((o) => o.status === "pending").reduce((t, o) => t + o.quantity * Number(o.unit_price), 0))}</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-surface p-3">
+              <p className="text-xs text-muted-foreground">Received orders cost</p>
+              <p className="text-lg font-bold">{rand(data.orders.filter((o) => o.status === "received").reduce((t, o) => t + o.quantity * Number(o.unit_price), 0))}</p>
+            </div>
+          </div>
+        )}
         <form onSubmit={place} className="space-y-2 rounded-2xl border border-border bg-surface p-4">
           <p className="text-sm font-semibold">Place a new order</p>
           <select className={sel} value={form.supplier_id} onChange={(e) => set("supplier_id", e.target.value)}>
@@ -123,15 +135,18 @@ function OrdersPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{o.products?.name ?? "—"} × {o.quantity}</p>
                     <p className="text-xs text-muted-foreground">
-                      {o.suppliers?.name ?? "No supplier"} • {rand(o.quantity * Number(o.unit_price))} • due {shortDate(o.deadline)}
+                      {o.suppliers?.name ?? "No supplier"} • {o.quantity} @ {rand(Number(o.unit_price))} • due {shortDate(o.deadline)}
                     </p>
                   </div>
+                  <div className="text-right">
+                  <p className="text-sm font-bold">{rand(o.quantity * Number(o.unit_price))}</p>
                   <span className={`h-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     o.status === "received" ? "bg-success/15 text-success"
                     : o.status === "cancelled" ? "bg-muted text-muted-foreground"
                     : late ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}`}>
                     {late ? "Overdue" : o.status === "pending" ? "Pending" : o.status === "received" ? "Received" : "Cancelled"}
                   </span>
+                  </div>
                 </div>
                 {o.status === "pending" && (
                   <div className="flex gap-2">
