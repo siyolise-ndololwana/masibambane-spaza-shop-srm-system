@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { ProductImage } from "@/components/ProductImage";
 import { ConfirmRecord } from "@/components/ConfirmRecord";
 import { FakePaymentGate } from "@/components/FakePaymentGate";
+import { buildReceiptPdf, printReceipt, type ReceiptData } from "@/lib/receipt";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Printer } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
   head: () => ({
@@ -41,6 +44,7 @@ function TillPage() {
   const [tendered, setTendered] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -100,6 +104,20 @@ function TillPage() {
       setConfirmOpen(false);
       toast.success(`Sale saved — ${rand(total)}`);
       low.forEach((n) => toast.warning(`Low stock: ${n}`));
+      setReceipt({
+        lines: lines.map((l) => ({
+          name: l.p.name,
+          quantity: l.q,
+          unitPrice: Number(l.p.selling_price),
+          stockAfter: l.p.quantity - l.q,
+        })),
+        total,
+        paymentMethod: payment,
+        tendered: payment === "Cash" && tenderedNum > 0 ? tenderedNum : undefined,
+        change: payment === "Cash" && tenderedNum > 0 ? Math.max(tenderedNum - total, 0) : undefined,
+        cashier: user?.email ?? "Staff",
+        date: new Date(),
+      });
       qc.invalidateQueries();
       reset();
     },
@@ -245,6 +263,32 @@ function TillPage() {
           mutation.mutate();
         }}
       />
+
+      <Dialog open={receipt !== null} onOpenChange={(open) => { if (!open) setReceipt(null); }}>
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md rounded-lg">
+          <DialogHeader>
+            <DialogTitle>Sale complete — {receipt ? rand(receipt.total) : ""}</DialogTitle>
+            <DialogDescription>
+              {receipt?.paymentMethod === "Cash" && receipt.change !== undefined
+                ? `Change due: ${rand(receipt.change)}. `
+                : ""}
+              Print a till receipt as a PDF, or start the next sale.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              onClick={() => {
+                if (!receipt) return;
+                printReceipt(buildReceiptPdf(receipt), `receipt-${receipt.date.getTime()}.pdf`);
+              }}
+            >
+              <Printer className="mr-1 size-4" /> Print receipt
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setReceipt(null)}>Next customer</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
