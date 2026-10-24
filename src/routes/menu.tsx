@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { BarChart3, ShieldCheck, ClipboardList, History, LogOut, Truck, Wallet, Settings, ShoppingBasket } from "lucide-react";
+import { BarChart3, ShieldCheck, ClipboardList, History, LogOut, Truck, Wallet, Settings, ShoppingBasket, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
