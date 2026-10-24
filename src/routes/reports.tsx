@@ -55,6 +55,7 @@ async function buildReport(kind: Kind, from: string, to: string) {
         .from("stock_orders")
         .select("created_at, quantity, unit_price, status, products(name), suppliers(name)")
         .neq("status", "cancelled")
+        .neq("payment_status", "paid")
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString())
         .order("created_at"),
@@ -71,14 +72,14 @@ async function buildReport(kind: Kind, from: string, to: string) {
         ...(orders ?? []).map((o) => [
           d(o.created_at),
           `${o.products?.name ?? "Product"} x ${o.quantity} from ${o.suppliers?.name ?? "supplier"} (${o.status})`,
-          "Stock order",
+          "Unpaid stock order",
           n(o.quantity * Number(o.unit_price)),
         ] as Cell[]),
       ],
       summary: [
         `Shop expenses: ${rand(total)}`,
-        `Stock orders: ${rand(orderTotal)}`,
-        `Total: ${rand(total + orderTotal)}`,
+        `Unpaid stock orders: ${rand(orderTotal)}`,
+        `Expenses and unpaid commitments: ${rand(total + orderTotal)}`,
       ],
     };
   }

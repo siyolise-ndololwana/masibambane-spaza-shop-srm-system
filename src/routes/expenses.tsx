@@ -46,9 +46,10 @@ function ExpensesPage() {
 
   const add = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error("Sign in to record expenses");
       const { error } = await supabase
         .from("expenses")
-        .insert({ description: desc.trim(), category: cat, amount: Number(amount), created_by: user!.id });
+        .insert({ description: desc.trim(), category: cat, amount: Number(amount), created_by: user.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -69,7 +70,7 @@ function ExpensesPage() {
         <h2 className="text-xl font-bold">Expenses</h2>
         <div className="grid grid-cols-2 gap-3">
           <Stat label="Expenses" value={rand(totalEx)} />
-          <Stat label="Stock purchases" value={rand(data?.purchases ?? 0)} />
+          <Stat label="Stock received value" value={rand(data?.purchases ?? 0)} />
         </div>
         <div className="space-y-2 rounded-2xl border border-border bg-surface p-4">
           <Input placeholder="Description (e.g. Electricity)" value={desc} maxLength={100} onChange={(e) => setDesc(e.target.value)} />
