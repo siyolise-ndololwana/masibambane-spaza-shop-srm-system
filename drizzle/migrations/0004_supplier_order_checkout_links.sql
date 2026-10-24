@@ -1,0 +1,3 @@
+ALTER TABLE public.stock_orders ADD COLUMN checkout_url text;
+COMMENT ON COLUMN public.stock_orders.checkout_url IS 'Supplier-provided HTTPS payment page for this order. Opening the link does not verify payment or change order totals.';
+ALTER TABLE public.stock_orders ADD CONSTRAINT stock_orders_checkout_url_https CHECK (checkout_url IS NULL OR (length(checkout_url) <= 2048 AND checkout_url ~ '^https://[^[:space:]]+$'));
