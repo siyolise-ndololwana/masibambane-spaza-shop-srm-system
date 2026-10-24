@@ -187,7 +187,17 @@ function CustomerOrdersPage() {
           title="Confirm this customer payment?"
           description={`${rand(Number(payForm.amount || 0))} will be saved in the income report and the order will be marked completed. This cannot be undone.`}
           pending={busy}
-          onConfirm={confirmPayment}
+          onConfirm={() => confirmPayment()}
+        />
+
+        <FakePaymentGate
+          open={gateOpen}
+          onOpenChange={setGateOpen}
+          amount={Number(payForm.amount || 0)}
+          onPaid={(reference) => {
+            toast.success(`Payment approved (${reference})`);
+            confirmPayment(reference);
+          }}
         />
 
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -236,7 +246,7 @@ function CustomerOrdersPage() {
                       </label>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" disabled={busy} onClick={() => setPayConfirmOpen(true)}>Save payment</Button>
+                      <Button size="sm" disabled={busy} onClick={() => startPayment(o.payment_method)}>Save payment</Button>
                       <Button size="sm" variant="outline" onClick={() => setPayFor(null)}>Back</Button>
                     </div>
                   </div>
