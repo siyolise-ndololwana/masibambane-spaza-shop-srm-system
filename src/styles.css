@@ -25,6 +25,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-brand: var(--primary);
+  --color-brand-gold: oklch(0.82 0.16 87);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -52,7 +53,7 @@
 
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.984 0.003 247.858);
+  --background: oklch(0.985 0.002 160);
   --foreground: oklch(0.21 0.034 264.5);
   --surface: oklch(1 0 0);
   --card: oklch(1 0 0);

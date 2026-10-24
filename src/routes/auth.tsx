@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { validatePasswordConfirmation } from "@/lib/registration";
+import { ShopBrand } from "@/components/ShopBrand";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -118,13 +119,8 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Masibambane
-          </p>
-          <h1 className="text-3xl font-bold text-primary">Spaza Pro</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Inventory and sales for the shop counter.
-          </p>
+          <ShopBrand large />
+          <h1 className="mt-4 text-xl font-semibold">{mode === "signin" ? "Welcome back" : "Join the shop team"}</h1>
         </div>
 
         <form

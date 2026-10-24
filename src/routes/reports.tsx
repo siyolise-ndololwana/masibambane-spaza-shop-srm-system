@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { getSalesInsights } from "@/lib/ai/sales-insights.functions";
 import { exportCSV, exportPDF, type Cell } from "@/lib/export";
+import { unrecordedOrderCosts } from "@/lib/shop-settings";
 
 type Kind = "sales" | "expenses" | "orders";
 
@@ -53,7 +54,7 @@ async function buildReport(kind: Kind, from: string, to: string) {
         .order("expense_date"),
       supabase
         .from("stock_orders")
-        .select("created_at, quantity, unit_price, status, products(name), suppliers(name)")
+        .select("created_at, quantity, unit_price, status, payment_status, products(name), suppliers(name)")
         .neq("status", "cancelled")
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString())
@@ -62,23 +63,24 @@ async function buildReport(kind: Kind, from: string, to: string) {
     if (error) throw error;
     if (oErr) throw oErr;
     const total = (data ?? []).reduce((s, e) => s + Number(e.amount), 0);
-    const orderTotal = (orders ?? []).reduce((s, o) => s + o.quantity * Number(o.unit_price), 0);
+    const unpaidOrders = unrecordedOrderCosts(orders ?? []);
+    const orderTotal = unpaidOrders.reduce((s, o) => s + o.quantity * Number(o.unit_price), 0);
     return {
       title: "Expense Report",
       headers: ["Date", "Description", "Category", "Amount (R)"],
       rows: [
         ...(data ?? []).map((e) => [d(e.expense_date), e.description, e.category, n(e.amount)] as Cell[]),
-        ...(orders ?? []).map((o) => [
+        ...unpaidOrders.map((o) => [
           d(o.created_at),
           `${o.products?.name ?? "Product"} x ${o.quantity} from ${o.suppliers?.name ?? "supplier"} (${o.status})`,
-          "Stock order",
+          "Unpaid stock order",
           n(o.quantity * Number(o.unit_price)),
         ] as Cell[]),
       ],
       summary: [
         `Shop expenses: ${rand(total)}`,
-        `Stock orders: ${rand(orderTotal)}`,
-        `Total: ${rand(total + orderTotal)}`,
+        `Unpaid stock orders: ${rand(orderTotal)}`,
+        `Expenses and unpaid commitments: ${rand(total + orderTotal)}`,
       ],
     };
   }

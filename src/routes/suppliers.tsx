@@ -35,7 +35,7 @@ function SuppliersPage() {
         supabase.from("suppliers").select("*").order("name"),
         supabase
           .from("stock_orders")
-          .select("id, supplier_id, quantity, unit_price, deadline, status, created_at, products(name)")
+          .select("id, supplier_id, quantity, unit_price, deadline, status, created_at, payment_status, paid_amount, products(name)")
           .order("created_at", { ascending: false }),
       ]);
       if (error) throw error;
@@ -109,6 +109,7 @@ function SuppliersPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">{rand(cost(o))}</p>
+                          <p className="text-muted-foreground">{o.payment_status === "paid" ? `Paid ${rand(Number(o.paid_amount))}` : "Unpaid"}</p>
                           <p className={late ? "text-destructive" : o.status === "received" ? "text-success" : "text-muted-foreground"}>
                             {late ? "Overdue" : o.status.charAt(0).toUpperCase() + o.status.slice(1)}
                           </p>
