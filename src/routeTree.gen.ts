@@ -21,6 +21,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StockRouteImport } from './routes/stock'
+import { Route as SupplierLedgerRouteImport } from './routes/supplier-ledger'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as TillRouteImport } from './routes/till'
 import { Route as SalesIndexRouteImport } from './routes/sales.index'
@@ -87,6 +88,11 @@ const StockRoute = StockRouteImport.update({
   path: '/stock',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupplierLedgerRoute = SupplierLedgerRouteImport.update({
+  id: '/supplier-ledger',
+  path: '/supplier-ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuppliersRoute = SuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
   '/stock': typeof StockRoute
+  '/supplier-ledger': typeof SupplierLedgerRoute
   '/suppliers': typeof SuppliersRoute
   '/till': typeof TillRoute
   '/sales/new': typeof SalesNewRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
   '/stock': typeof StockRoute
+  '/supplier-ledger': typeof SupplierLedgerRoute
   '/suppliers': typeof SuppliersRoute
   '/till': typeof TillRoute
   '/sales/new': typeof SalesNewRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
   '/stock': typeof StockRoute
+  '/supplier-ledger': typeof SupplierLedgerRoute
   '/suppliers': typeof SuppliersRoute
   '/till': typeof TillRoute
   '/sales/new': typeof SalesNewRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/settings'
     | '/stock'
+    | '/supplier-ledger'
     | '/suppliers'
     | '/till'
     | '/sales/new'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/settings'
     | '/stock'
+    | '/supplier-ledger'
     | '/suppliers'
     | '/till'
     | '/sales/new'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/settings'
     | '/stock'
+    | '/supplier-ledger'
     | '/suppliers'
     | '/till'
     | '/sales/new'
@@ -244,6 +256,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   SettingsRoute: typeof SettingsRoute
   StockRoute: typeof StockRoute
+  SupplierLedgerRoute: typeof SupplierLedgerRoute
   SuppliersRoute: typeof SuppliersRoute
   TillRoute: typeof TillRoute
   SalesNewRoute: typeof SalesNewRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StockRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/supplier-ledger': {
+      id: '/supplier-ledger'
+      path: '/supplier-ledger'
+      fullPath: '/supplier-ledger'
+      preLoaderRoute: typeof SupplierLedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/suppliers': {
       id: '/suppliers'
       path: '/suppliers'
@@ -388,6 +408,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   SettingsRoute: SettingsRoute,
   StockRoute: StockRoute,
+  SupplierLedgerRoute: SupplierLedgerRoute,
   SuppliersRoute: SuppliersRoute,
   TillRoute: TillRoute,
   SalesNewRoute: SalesNewRoute,
