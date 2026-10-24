@@ -146,6 +146,7 @@ function OrdersPage() {
                     : late ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}`}>
                     {late ? "Overdue" : o.status === "pending" ? "Pending" : o.status === "received" ? "Received" : "Cancelled"}
                   </span>
+                  <p className="mt-1 text-xs text-muted-foreground">{o.payment_status === "paid" ? `Paid ${rand(Number(o.paid_amount))}` : "Unpaid"}</p>
                   </div>
                 </div>
                 {o.status !== "cancelled" && (

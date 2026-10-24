@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { ShopBrand } from "@/components/ShopBrand";
 
 export function useCurrentStaff() {
   const { user } = useAuth();
@@ -13,11 +14,12 @@ export function useCurrentStaff() {
     queryKey: ["staff", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (!user) return null;
       const [{ data: profile }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("full_name, phone").eq("id", user!.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user!.id),
+        supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
       ]);
-      const name = profile?.full_name?.trim() || (user!.email ?? "Staff");
+      const name = profile?.full_name?.trim() || (user.email ?? "Staff");
       const role = roles?.some((r) => r.role === "owner") ? "Shop Owner" : "Cashier";
       return { name, role, isOwner: role === "Shop Owner" };
     },
@@ -38,12 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-surface px-4 py-3">
-        <div>
-          <h1 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Masibambane
-          </h1>
-          <p className="text-lg font-bold leading-none text-primary">Spaza Pro</p>
-        </div>
+        <Link to="/" className="mr-3 shrink-0"><ShopBrand /></Link>
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-xs font-medium">{staff?.name ?? "—"}</p>

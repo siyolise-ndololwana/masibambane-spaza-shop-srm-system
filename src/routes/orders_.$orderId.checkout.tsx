@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { rand, shortDate } from "@/lib/format";
 import { validateSupplierCheckoutUrl } from "@/lib/supplier-checkout";
+import { validatePaymentAmount } from "@/lib/shop-settings";
+import { ConfirmRecord } from "@/components/ConfirmRecord";
 
 export const Route = createFileRoute("/orders_/$orderId/checkout")({
   head: () => ({ meta: [
@@ -32,6 +34,9 @@ function SupplierCheckoutPage() {
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [validation, setValidation] = useState("");
+  const [amount, setAmount] = useState("");
+  const [reference, setReference] = useState("");
+  const [confirmPayment, setConfirmPayment] = useState(false);
   const query = useQuery({
     queryKey: ["supplier-checkout", orderId], enabled: !!user,
     queryFn: async () => {
@@ -42,6 +47,7 @@ function SupplierCheckoutPage() {
     },
   });
   const order = query.data;
+  useEffect(() => { if (order) setAmount((order.quantity * Number(order.unit_price)).toFixed(2)); }, [order?.id]);
   const linkStorageReady = !!order && "checkout_url" in order;
   const storedValue = order && "checkout_url" in order ? order.checkout_url : null;
   const savedUrl = typeof storedValue === "string" ? storedValue : "";
@@ -72,6 +78,20 @@ function SupplierCheckoutPage() {
     finally { setBusy(false); }
   };
 
+  const recordPayment = async () => {
+    if (!order) return;
+    setBusy(true);
+    try {
+      const paidAmount = validatePaymentAmount(amount);
+      const { error } = await supabase.rpc("confirm_supplier_payment", { p_order_id: order.id, p_amount: paidAmount, p_reference: reference });
+      if (error) throw error;
+      await qc.invalidateQueries();
+      setConfirmPayment(false);
+      toast.success("Payment recorded in expenses. Delivery status is unchanged.");
+    } catch (error) { toast.error((error as Error).message); }
+    finally { setBusy(false); }
+  };
+
   if (loading) return null;
   return <AppShell>
     <div className="space-y-6">
@@ -94,6 +114,7 @@ function SupplierCheckoutPage() {
             <div><dt className="text-muted-foreground">Delivery deadline</dt><dd>{shortDate(order.deadline)}</dd></div>
             <div><dt className="text-muted-foreground">Order reference</dt><dd className="break-all">{order.id}</dd></div>
             <div><dt className="text-muted-foreground">Delivery status</dt><dd className="capitalize">{order.status}</dd></div>
+            <div><dt className="text-muted-foreground">Payment status</dt><dd className={order.payment_status === "paid" ? "font-semibold text-success" : "text-muted-foreground"}>{order.payment_status === "paid" ? "Paid · staff confirmed" : "Unpaid"}</dd></div>
           </dl>
         </section>
         {order.status === "cancelled" ? <p className="text-muted-foreground">This order is cancelled. Checkout is unavailable.</p> : <>
@@ -110,9 +131,19 @@ function SupplierCheckoutPage() {
             <Button asChild><a href={safeUrl} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer"><ExternalLink />Open supplier payment page</a></Button>
           </div>}
           <p className="text-xs text-muted-foreground">The order total stays in expense reports. Opening checkout does not confirm payment or receive stock.</p>
+          <section className="space-y-3 border-t border-border pt-5">
+            <h3 className="text-lg font-semibold">Payment confirmation</h3>
+            {order.payment_status === "paid" ? <div className="space-y-1 text-sm"><p className="font-semibold text-success">{rand(Number(order.paid_amount))} recorded</p><p className="text-muted-foreground">{order.paid_at ? shortDate(order.paid_at) : ""}{order.payment_reference ? ` · ${order.payment_reference}` : ""}</p><Button asChild variant="link" className="px-0"><Link to="/expenses">View expense record →</Link></Button></div> : <form className="space-y-3" onSubmit={event=>{event.preventDefault();try{validatePaymentAmount(amount);setConfirmPayment(true);}catch(error){toast.error((error as Error).message);}}}>
+              <label className="block text-sm">Amount paid (R)<Input type="number" min="0.01" step="0.01" required value={amount} onChange={event=>setAmount(event.target.value)}/></label>
+              <label className="block text-sm">Payment reference (optional)<Input maxLength={200} value={reference} onChange={event=>setReference(event.target.value)}/></label>
+              <p className="text-xs text-muted-foreground">Confirm only after payment succeeds with the supplier. This is your staff confirmation, not automatic bank verification.</p>
+              <Button disabled={busy} type="submit">I have paid the supplier</Button>
+            </form>}
+          </section>
         </>}
         {order.status === "received" && <Button asChild variant="link"><Link to="/activity">View stock activity →</Link></Button>}
       </>}
+      <ConfirmRecord open={confirmPayment} onOpenChange={setConfirmPayment} title="Confirm supplier payment" description={`Record ${rand(Number(amount))} paid to ${order?.suppliers?.name ?? "the supplier"}? This saves one expense and marks the order paid, without receiving stock.`} pending={busy} onConfirm={recordPayment}/>
     </div>
   </AppShell>;
 }
