@@ -1,3 +1,7 @@
 - [x] Save a secure supplier payment link on each order.
 - [x] Add an order checkout page and links from orders and suppliers.
 - [x] Test saved links and checkout without making a payment; verify stock, order costs and activity counts stay unchanged and restore the original link.
+- [ ] Replace Spaza Pro with original Masibambane logo and matching favicon.
+- [ ] Save shop opening hours and contact details in shop settings.
+- [ ] Confirm supplier payments atomically, update payment status, and count the paid expense once.
+- [ ] Verify settings and payment confirmation with tests and signed-in checks.
