@@ -57,7 +57,7 @@ function SupplierCheckoutPage() {
     setValidation("");
     setBusy(true);
     try {
-      const update = { id: order.id, checkout_url: checkoutUrl };
+      const update: Record<string, string | null> = { checkout_url: checkoutUrl };
       const { data, error } = await supabase.from("stock_orders").update(update)
         .eq("id", order.id).neq("status", "cancelled").select("id");
       if (error) throw error;
