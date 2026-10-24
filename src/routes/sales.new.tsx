@@ -36,6 +36,7 @@ function NewSalePage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [payment, setPayment] = useState("Cash");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
