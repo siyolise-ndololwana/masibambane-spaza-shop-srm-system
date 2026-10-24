@@ -9,6 +9,7 @@ import { rand, shortDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmRecord } from "@/components/ConfirmRecord";
+import { FakePaymentGate } from "@/components/FakePaymentGate";
 
 export const Route = createFileRoute("/customer-orders")({
   head: () => ({
@@ -33,6 +34,7 @@ function CustomerOrdersPage() {
   const [payFor, setPayFor] = useState<string | null>(null);
   const [payForm, setPayForm] = useState({ amount: "", reference: "" });
   const [payConfirmOpen, setPayConfirmOpen] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["customer_orders"],
@@ -86,16 +88,17 @@ function CustomerOrdersPage() {
     qc.invalidateQueries();
   };
 
-  const confirmPayment = async () => {
+  const confirmPayment = async (gatewayRef?: string) => {
     if (!payFor) return;
     const amount = Number(payForm.amount);
     if (!(amount > 0)) { toast.error("Enter the amount the customer paid."); return; }
     setPayConfirmOpen(false);
     setBusy(true);
+    const reference = [payForm.reference.trim(), gatewayRef].filter(Boolean).join(" ");
     const { error } = await supabase.rpc("confirm_customer_payment", {
       p_order_id: payFor,
       p_amount: amount,
-      p_reference: payForm.reference.trim(),
+      p_reference: reference,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -103,6 +106,12 @@ function CustomerOrdersPage() {
     setPayFor(null);
     setPayForm({ amount: "", reference: "" });
     qc.invalidateQueries();
+  };
+
+  const startPayment = (method: string) => {
+    if (!(Number(payForm.amount) > 0)) { toast.error("Enter the amount the customer paid."); return; }
+    if (method === "Cash") setPayConfirmOpen(true);
+    else setGateOpen(true);
   };
 
   const today = new Date().toISOString().slice(0, 10);
@@ -178,7 +187,17 @@ function CustomerOrdersPage() {
           title="Confirm this customer payment?"
           description={`${rand(Number(payForm.amount || 0))} will be saved in the income report and the order will be marked completed. This cannot be undone.`}
           pending={busy}
-          onConfirm={confirmPayment}
+          onConfirm={() => confirmPayment()}
+        />
+
+        <FakePaymentGate
+          open={gateOpen}
+          onOpenChange={setGateOpen}
+          amount={Number(payForm.amount || 0)}
+          onPaid={(reference) => {
+            toast.success(`Payment approved (${reference})`);
+            confirmPayment(reference);
+          }}
         />
 
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -227,7 +246,7 @@ function CustomerOrdersPage() {
                       </label>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" disabled={busy} onClick={() => setPayConfirmOpen(true)}>Save payment</Button>
+                      <Button size="sm" disabled={busy} onClick={() => startPayment(o.payment_method)}>Save payment</Button>
                       <Button size="sm" variant="outline" onClick={() => setPayFor(null)}>Back</Button>
                     </div>
                   </div>
