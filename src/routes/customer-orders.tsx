@@ -9,6 +9,7 @@ import { rand, shortDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmRecord } from "@/components/ConfirmRecord";
+import { FakePaymentGate } from "@/components/FakePaymentGate";
 
 export const Route = createFileRoute("/customer-orders")({
   head: () => ({
@@ -33,6 +34,7 @@ function CustomerOrdersPage() {
   const [payFor, setPayFor] = useState<string | null>(null);
   const [payForm, setPayForm] = useState({ amount: "", reference: "" });
   const [payConfirmOpen, setPayConfirmOpen] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["customer_orders"],
