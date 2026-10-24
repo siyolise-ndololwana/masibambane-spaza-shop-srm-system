@@ -88,16 +88,17 @@ function CustomerOrdersPage() {
     qc.invalidateQueries();
   };
 
-  const confirmPayment = async () => {
+  const confirmPayment = async (gatewayRef?: string) => {
     if (!payFor) return;
     const amount = Number(payForm.amount);
     if (!(amount > 0)) { toast.error("Enter the amount the customer paid."); return; }
     setPayConfirmOpen(false);
     setBusy(true);
+    const reference = [payForm.reference.trim(), gatewayRef].filter(Boolean).join(" ");
     const { error } = await supabase.rpc("confirm_customer_payment", {
       p_order_id: payFor,
       p_amount: amount,
-      p_reference: payForm.reference.trim(),
+      p_reference: reference,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -105,6 +106,12 @@ function CustomerOrdersPage() {
     setPayFor(null);
     setPayForm({ amount: "", reference: "" });
     qc.invalidateQueries();
+  };
+
+  const startPayment = (method: string) => {
+    if (!(Number(payForm.amount) > 0)) { toast.error("Enter the amount the customer paid."); return; }
+    if (method === "Cash") setPayConfirmOpen(true);
+    else setGateOpen(true);
   };
 
   const today = new Date().toISOString().slice(0, 10);
