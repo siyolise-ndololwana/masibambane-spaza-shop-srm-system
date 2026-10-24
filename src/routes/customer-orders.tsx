@@ -30,6 +30,9 @@ function CustomerOrdersPage() {
   const [form, setForm] = useState({ customer_name: "", product_id: "", quantity: "", unit_price: "", payment_method: "Cash", delivery_date: "", notes: "" });
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [payFor, setPayFor] = useState<string | null>(null);
+  const [payForm, setPayForm] = useState({ amount: "", reference: "" });
+  const [payConfirmOpen, setPayConfirmOpen] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["customer_orders"],
@@ -80,6 +83,25 @@ function CustomerOrdersPage() {
     const { error } = await supabase.from("customer_orders").update({ status }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(status === "completed" ? "Order completed and stock updated in the activity log" : "Order cancelled");
+    qc.invalidateQueries();
+  };
+
+  const confirmPayment = async () => {
+    if (!payFor) return;
+    const amount = Number(payForm.amount);
+    if (!(amount > 0)) { toast.error("Enter the amount the customer paid."); return; }
+    setPayConfirmOpen(false);
+    setBusy(true);
+    const { error } = await supabase.rpc("confirm_customer_payment", {
+      p_order_id: payFor,
+      p_amount: amount,
+      p_reference: payForm.reference.trim(),
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Payment saved to the income report and order completed");
+    setPayFor(null);
+    setPayForm({ amount: "", reference: "" });
     qc.invalidateQueries();
   };
 
@@ -150,6 +172,15 @@ function CustomerOrdersPage() {
           onConfirm={place}
         />
 
+        <ConfirmRecord
+          open={payConfirmOpen}
+          onOpenChange={setPayConfirmOpen}
+          title="Confirm this customer payment?"
+          description={`${rand(Number(payForm.amount || 0))} will be saved in the income report and the order will be marked completed. This cannot be undone.`}
+          pending={busy}
+          onConfirm={confirmPayment}
+        />
+
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           {data?.orders.map((o, i) => {
             const late = o.status === "pending" && o.delivery_date < today;
@@ -173,10 +204,32 @@ function CustomerOrdersPage() {
                     </span>
                   </div>
                 </div>
-                {o.status === "pending" && (
+                {o.payment_status === "paid" && (
+                  <p className="text-xs font-medium text-success">
+                    Paid {rand(Number(o.paid_amount))}{o.payment_reference ? ` • ref ${o.payment_reference}` : ""} — saved in the income report
+                  </p>
+                )}
+                {o.status === "pending" && payFor !== o.id && (
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => setStatus(o.id, "completed")}>Mark completed</Button>
+                    <Button size="sm" onClick={() => { setPayFor(o.id); setPayForm({ amount: String(o.quantity * Number(o.unit_price)), reference: "" }); }}>Confirm payment</Button>
                     <Button size="sm" variant="outline" onClick={() => setStatus(o.id, "cancelled")}>Cancel</Button>
+                  </div>
+                )}
+                {o.status === "pending" && payFor === o.id && (
+                  <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+                    <p className="text-xs font-semibold">Customer payment</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-xs">Amount paid (R)
+                        <Input type="number" min={0} step="0.01" value={payForm.amount} onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))} />
+                      </label>
+                      <label className="text-xs">Reference (optional)
+                        <Input value={payForm.reference} maxLength={50} onChange={(e) => setPayForm((f) => ({ ...f, reference: e.target.value }))} />
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" disabled={busy} onClick={() => setPayConfirmOpen(true)}>Save payment</Button>
+                      <Button size="sm" variant="outline" onClick={() => setPayFor(null)}>Back</Button>
+                    </div>
                   </div>
                 )}
                 {o.status === "completed" && (
