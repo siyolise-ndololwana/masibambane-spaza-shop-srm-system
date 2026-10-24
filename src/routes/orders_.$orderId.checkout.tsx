@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, Link2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { ProductImage } from "@/components/ProductImage";
@@ -57,7 +58,8 @@ function SupplierCheckoutPage() {
     setValidation("");
     setBusy(true);
     try {
-      const update: Record<string, string | null> = { checkout_url: checkoutUrl };
+      // Guarded by linkStorageReady until Cloud applies the pending column and refreshes types.
+      const update: TablesUpdate<"stock_orders"> = { id: order.id, ...{ checkout_url: checkoutUrl } };
       const { data, error } = await supabase.from("stock_orders").update(update)
         .eq("id", order.id).neq("status", "cancelled").select("id");
       if (error) throw error;
