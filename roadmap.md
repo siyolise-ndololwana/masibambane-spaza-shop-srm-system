@@ -1,3 +1,3 @@
-- [ ] Save a secure supplier payment link on each order.
-- [ ] Add an order checkout page and links from orders and suppliers.
-- [ ] Test saved links and checkout without making a payment.
+- [x] Save a secure supplier payment link on each order.
+- [x] Add an order checkout page and links from orders and suppliers.
+- [x] Test saved links and checkout without making a payment; verify stock, order costs and activity counts stay unchanged and restore the original link.
