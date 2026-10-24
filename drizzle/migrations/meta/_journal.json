@@ -29,6 +29,13 @@
       "when": 1791533361207,
       "tag": "0003_stock_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792844651224,
+      "tag": "0004_supplier_order_checkout_links",
+      "breakpoints": true
     }
   ]
 }

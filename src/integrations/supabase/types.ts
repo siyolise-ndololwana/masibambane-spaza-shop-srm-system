@@ -272,6 +272,7 @@ export type Database = {
       }
       stock_orders: {
         Row: {
+          checkout_url: string | null
           created_at: string
           deadline: string
           id: string
@@ -285,6 +286,7 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          checkout_url?: string | null
           created_at?: string
           deadline: string
           id?: string
@@ -298,6 +300,7 @@ export type Database = {
           unit_price?: number
         }
         Update: {
+          checkout_url?: string | null
           created_at?: string
           deadline?: string
           id?: string

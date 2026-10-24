@@ -98,6 +98,11 @@ function SuppliersPage() {
                         <div className="min-w-0">
                           <p className="truncate font-medium">{o.products?.name ?? "—"} × {o.quantity}</p>
                           <p className="text-muted-foreground">Ordered {shortDate(o.created_at)} • due {shortDate(o.deadline)}</p>
+                          {o.status !== "cancelled" && (
+                            <Button asChild size="sm" variant="link" className="h-auto px-0 py-1">
+                              <Link to="/orders/$orderId/checkout" params={{ orderId: o.id }}>Supplier checkout →</Link>
+                            </Button>
+                          )}
                           {o.status === "received" && (
                             <Link to="/activity" className="font-medium text-primary">View in activity log →</Link>
                           )}
@@ -105,7 +110,7 @@ function SuppliersPage() {
                         <div className="text-right">
                           <p className="font-semibold">{rand(cost(o))}</p>
                           <p className={late ? "text-destructive" : o.status === "received" ? "text-success" : "text-muted-foreground"}>
-                            {late ? "Overdue" : o.status[0]!.toUpperCase() + o.status.slice(1)}
+                            {late ? "Overdue" : o.status.charAt(0).toUpperCase() + o.status.slice(1)}
                           </p>
                         </div>
                       </div>

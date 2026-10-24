@@ -12,3 +12,4 @@
 - Product visuals are mapped through ProductImage using bundled category illustrations; this keeps stock and sale cards consistent without claiming generated images are exact brand packaging.
 - Confirmation dialogs use ConfirmRecord and preserve form state until the save succeeds, preventing accidental sales or stock receipts.
 - Registration password matching is validated by a shared browser-safe helper before signup; never store plaintext passwords.
+- Supplier checkout stores an order-specific HTTPS payment link and opens it externally; it never marks payment verified, changes stock, or duplicates expenses because supplier payment pages have no connected payment callbacks.

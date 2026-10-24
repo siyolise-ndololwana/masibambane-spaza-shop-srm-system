@@ -148,6 +148,11 @@ function OrdersPage() {
                   </span>
                   </div>
                 </div>
+                {o.status !== "cancelled" && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/orders/$orderId/checkout" params={{ orderId: o.id }}>Supplier checkout</Link>
+                  </Button>
+                )}
                 {o.status === "pending" && (
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => setStatus(o.id, "received")}>Mark received</Button>
