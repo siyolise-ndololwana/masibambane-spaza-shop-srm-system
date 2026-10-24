@@ -23,6 +23,7 @@ export type Database = {
           description: string
           expense_date: string
           id: string
+          stock_order_id: string | null
         }
         Insert: {
           amount: number
@@ -32,6 +33,7 @@ export type Database = {
           description: string
           expense_date?: string
           id?: string
+          stock_order_id?: string | null
         }
         Update: {
           amount?: number
@@ -41,8 +43,17 @@ export type Database = {
           description?: string
           expense_date?: string
           id?: string
+          stock_order_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_stock_order_id_fkey"
+            columns: ["stock_order_id"]
+            isOneToOne: false
+            referencedRelation: "stock_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_log: {
         Row: {
@@ -225,6 +236,33 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_settings: {
+        Row: {
+          address: string
+          email: string
+          id: number
+          opening_hours: Json
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          email?: string
+          id?: number
+          opening_hours?: Json
+          phone?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          email?: string
+          id?: number
+          opening_hours?: Json
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_deliveries: {
         Row: {
           date_received: string
@@ -278,6 +316,11 @@ export type Database = {
           id: string
           notes: string | null
           ordered_by: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          paid_by: string | null
+          payment_reference: string | null
+          payment_status: string
           product_id: string
           quantity: number
           received_at: string | null
@@ -292,6 +335,11 @@ export type Database = {
           id?: string
           notes?: string | null
           ordered_by?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           product_id: string
           quantity: number
           received_at?: string | null
@@ -306,6 +354,11 @@ export type Database = {
           id?: string
           notes?: string | null
           ordered_by?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           product_id?: string
           quantity?: number
           received_at?: string | null
@@ -383,6 +436,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_supplier_payment: {
+        Args: { p_amount: number; p_order_id: string; p_reference?: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
