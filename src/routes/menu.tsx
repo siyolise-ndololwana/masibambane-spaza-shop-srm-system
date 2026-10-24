@@ -27,6 +27,7 @@ const items = [
   { to: "/activity", label: "Stock activity log", desc: "Who changed stock, when and why", icon: History },
   { to: "/expenses", label: "Expenses", desc: "Record and total shop costs", icon: Wallet },
   { to: "/suppliers", label: "Suppliers", desc: "Orders, pending deliveries and costs", icon: Truck },
+  { to: "/supplier-ledger", label: "Supplier ledger", desc: "Outstanding payments per supplier", icon: BookUser },
   { to: "/settings", label: "Shop settings", desc: "Opening hours and contact details", icon: Settings },
   { to: "/security", label: "Two-step verification", desc: "Protect your login with an authenticator app", icon: ShieldCheck },
 ] as const;
