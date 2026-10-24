@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { ProductImage } from "@/components/ProductImage";
 import { ConfirmRecord } from "@/components/ConfirmRecord";
 import { FakePaymentGate } from "@/components/FakePaymentGate";
+import { buildReceiptPdf, printReceipt, type ReceiptData } from "@/lib/receipt";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Printer } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
   head: () => ({
@@ -41,6 +44,7 @@ function TillPage() {
   const [tendered, setTendered] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
