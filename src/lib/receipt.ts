@@ -12,8 +12,8 @@ export type ReceiptData = {
   lines: ReceiptLine[];
   total: number;
   paymentMethod: string;
-  tendered?: number;
-  change?: number;
+  tendered?: number | undefined;
+  change?: number | undefined;
   cashier: string;
   date: Date;
 };
