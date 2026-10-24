@@ -104,6 +104,20 @@ function TillPage() {
       setConfirmOpen(false);
       toast.success(`Sale saved — ${rand(total)}`);
       low.forEach((n) => toast.warning(`Low stock: ${n}`));
+      setReceipt({
+        lines: lines.map((l) => ({
+          name: l.p.name,
+          quantity: l.q,
+          unitPrice: Number(l.p.selling_price),
+          stockAfter: l.p.quantity - l.q,
+        })),
+        total,
+        paymentMethod: payment,
+        tendered: payment === "Cash" && tenderedNum > 0 ? tenderedNum : undefined,
+        change: payment === "Cash" && tenderedNum > 0 ? Math.max(tenderedNum - total, 0) : undefined,
+        cashier: user?.email ?? "Staff",
+        date: new Date(),
+      });
       qc.invalidateQueries();
       reset();
     },
