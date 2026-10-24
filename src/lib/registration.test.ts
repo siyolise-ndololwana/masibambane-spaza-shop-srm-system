@@ -1,7 +1,8 @@
-import { expect, test } from "bun:test";
+import { test } from "node:test";
+import { strict as assert } from "node:assert";
 import { validatePasswordConfirmation } from "./registration";
 
 test("registration requires matching password confirmation", () => {
-  expect(validatePasswordConfirmation("ShopPassword12", "different")).toBe("Passwords do not match.");
-  expect(validatePasswordConfirmation("ShopPassword12", "ShopPassword12")).toBeNull();
+  assert.equal(validatePasswordConfirmation("ShopPassword12", "different"), "Passwords do not match.");
+  assert.equal(validatePasswordConfirmation("ShopPassword12", "ShopPassword12"), null);
 });
