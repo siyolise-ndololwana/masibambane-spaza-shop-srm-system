@@ -23,9 +23,15 @@ export type Database = {
           delivery_date: string
           id: string
           notes: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          paid_by: string | null
           payment_method: string
+          payment_reference: string | null
+          payment_status: string
           product_id: string
           quantity: number
+          sale_id: string | null
           status: string
           unit_price: number
         }
@@ -37,9 +43,15 @@ export type Database = {
           delivery_date: string
           id?: string
           notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          paid_by?: string | null
           payment_method?: string
+          payment_reference?: string | null
+          payment_status?: string
           product_id: string
           quantity: number
+          sale_id?: string | null
           status?: string
           unit_price?: number
         }
@@ -51,9 +63,15 @@ export type Database = {
           delivery_date?: string
           id?: string
           notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          paid_by?: string | null
           payment_method?: string
+          payment_reference?: string | null
+          payment_status?: string
           product_id?: string
           quantity?: number
+          sale_id?: string | null
           status?: string
           unit_price?: number
         }
@@ -63,6 +81,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
             referencedColumns: ["id"]
           },
         ]
@@ -489,6 +514,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_customer_payment: {
+        Args: { p_amount: number; p_order_id: string; p_reference: string }
+        Returns: string
+      }
       confirm_supplier_payment: {
         Args: { p_amount: number; p_order_id: string; p_reference?: string }
         Returns: string

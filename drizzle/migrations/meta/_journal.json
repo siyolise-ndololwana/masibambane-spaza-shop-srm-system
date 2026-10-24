@@ -50,6 +50,13 @@
       "when": 1792864713978,
       "tag": "0006_create_customer_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792864944220,
+      "tag": "0007_customer_order_payments",
+      "breakpoints": true
     }
   ]
 }
