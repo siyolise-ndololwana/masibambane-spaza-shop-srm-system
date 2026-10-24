@@ -21,6 +21,7 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StockRouteImport } from './routes/stock'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as TillRouteImport } from './routes/till'
 import { Route as SalesIndexRouteImport } from './routes/sales.index'
 import { Route as SalesNewRouteImport } from './routes/sales.new'
 import { Route as OrdersOrderIdCheckoutRouteImport } from './routes/orders_.$orderId.checkout'
@@ -85,6 +86,11 @@ const SuppliersRoute = SuppliersRouteImport.update({
   path: '/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TillRoute = TillRouteImport.update({
+  id: '/till',
+  path: '/till',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SalesIndexRoute = SalesIndexRouteImport.update({
   id: '/sales/',
   path: '/sales/',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/stock': typeof StockRoute
   '/suppliers': typeof SuppliersRoute
+  '/till': typeof TillRoute
   '/sales/new': typeof SalesNewRoute
   '/sales/': typeof SalesIndexRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/stock': typeof StockRoute
   '/suppliers': typeof SuppliersRoute
+  '/till': typeof TillRoute
   '/sales/new': typeof SalesNewRoute
   '/sales': typeof SalesIndexRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/stock': typeof StockRoute
   '/suppliers': typeof SuppliersRoute
+  '/till': typeof TillRoute
   '/sales/new': typeof SalesNewRoute
   '/sales/': typeof SalesIndexRoute
   '/orders_/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stock'
     | '/suppliers'
+    | '/till'
     | '/sales/new'
     | '/sales/'
     | '/orders/$orderId/checkout'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stock'
     | '/suppliers'
+    | '/till'
     | '/sales/new'
     | '/sales'
     | '/orders/$orderId/checkout'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stock'
     | '/suppliers'
+    | '/till'
     | '/sales/new'
     | '/sales/'
     | '/orders_/$orderId/checkout'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   StockRoute: typeof StockRoute
   SuppliersRoute: typeof SuppliersRoute
+  TillRoute: typeof TillRoute
   SalesNewRoute: typeof SalesNewRoute
   SalesIndexRoute: typeof SalesIndexRoute
   OrdersOrderIdCheckoutRoute: typeof OrdersOrderIdCheckoutRoute
@@ -311,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/till': {
+      id: '/till'
+      path: '/till'
+      fullPath: '/till'
+      preLoaderRoute: typeof TillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sales/': {
       id: '/sales/'
       path: '/sales'
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   StockRoute: StockRoute,
   SuppliersRoute: SuppliersRoute,
+  TillRoute: TillRoute,
   SalesNewRoute: SalesNewRoute,
   SalesIndexRoute: SalesIndexRoute,
   OrdersOrderIdCheckoutRoute: OrdersOrderIdCheckoutRoute,
