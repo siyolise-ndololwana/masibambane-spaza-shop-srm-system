@@ -58,8 +58,7 @@ function SupplierCheckoutPage() {
     setValidation("");
     setBusy(true);
     try {
-      // Guarded by linkStorageReady until Cloud applies the pending column and refreshes types.
-      const update: TablesUpdate<"stock_orders"> = { id: order.id, ...{ checkout_url: checkoutUrl } };
+      const update: TablesUpdate<"stock_orders"> = { checkout_url: checkoutUrl };
       const { data, error } = await supabase.from("stock_orders").update(update)
         .eq("id", order.id).neq("status", "cancelled").select("id");
       if (error) throw error;
