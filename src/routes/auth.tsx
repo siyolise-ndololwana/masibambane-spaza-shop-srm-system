@@ -6,11 +6,14 @@ import { useAuth, needsSecondStep } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { validatePasswordConfirmation } from "@/lib/registration";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Staff Sign In — Masibambane Spaza" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content: "Secure staff login for the Masibambane Spaza inventory and sales system.",
@@ -29,6 +32,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [mfa, setMfa] = useState(false);
@@ -51,6 +55,8 @@ function AuthPage() {
         if (await needsSecondStep()) setMfa(true);
         else navigate({ to: "/" });
       } else {
+        const confirmationError = validatePasswordConfirmation(password, confirmation);
+        if (confirmationError) throw new Error(confirmationError);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -163,10 +169,16 @@ function AuthPage() {
               required
             />
           </div>
+          {mode === "signup" && <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Input id="confirmPassword" type="password" autoComplete="new-password" value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)} required minLength={6} aria-invalid={confirmation.length > 0 && confirmation !== password} />
+            {confirmation && confirmation !== password && <p className="text-xs text-destructive">Passwords do not match.</p>}
+          </div>}
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </Button>
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             className="w-full text-center text-xs font-medium text-primary"
@@ -174,7 +186,7 @@ function AuthPage() {
             {mode === "signin"
               ? "New staff member? Create an account"
               : "Already registered? Sign in"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

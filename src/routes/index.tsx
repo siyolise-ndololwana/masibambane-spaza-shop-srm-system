@@ -10,6 +10,8 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Shop Dashboard — Masibambane Spaza" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
