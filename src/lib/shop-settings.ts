@@ -12,7 +12,6 @@ export function validatePaymentAmount(value: string) {
   if (!/^\d+(\.\d{1,2})?$/.test(value) || Number(value) <= 0) throw new Error("Enter a positive amount with at most two decimal places.");
   return Number(value);
 }
-export function unrecordedOrderCosts<T extends { id: string }>(orders: T[], expenses: { stock_order_id: string | null }[]) {
-  const paid = new Set(expenses.map(e => e.stock_order_id).filter(Boolean));
-  return orders.filter(o => !paid.has(o.id));
+export function unrecordedOrderCosts<T extends { payment_status: string }>(orders: T[]) {
+  return orders.filter(o => o.payment_status !== "paid");
 }
