@@ -19,6 +19,7 @@ export const Route = createFileRoute("/menu")({
 });
 
 const items = [
+  { to: "/till", label: "Till", desc: "Ring up sales with live totals", icon: Calculator },
   { to: "/reports", label: "Monthly reports", desc: "Sales charts and summary", icon: BarChart3 },
   { to: "/orders", label: "Stock orders", desc: "Order from suppliers with deadlines", icon: ClipboardList },
   { to: "/customer-orders", label: "Customer orders", desc: "Take customer orders with delivery dates", icon: ShoppingBasket },
