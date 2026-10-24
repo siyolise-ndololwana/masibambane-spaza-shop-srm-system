@@ -146,7 +146,7 @@ function CustomerOrdersPage() {
           onOpenChange={setConfirmOpen}
           title="Save this customer order?"
           description={`${form.customer_name} — ${Number(form.quantity)} × ${rand(Number(form.unit_price || 0))}, ${form.payment_method}, delivery ${form.delivery_date}. Total ${rand(Number(form.quantity) * Number(form.unit_price || 0))}.`}
-          confirmLabel="Save order"
+          pending={busy}
           onConfirm={place}
         />
 
