@@ -35,7 +35,10 @@ export function buildReceiptPdf(d: ReceiptData): Blob {
   doc.setFont("helvetica", "normal");
   doc.text("123 Masibambane Lane, New Brighton, Gqeberha", cx, y, { align: "center" });
   y += lineH;
-  doc.text(`${d.date.toLocaleDateString("en-ZA")} ${d.date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}  Cashier: ${d.cashier}`, cx, y, { align: "center" });
+  doc.text(`${d.date.toLocaleDateString("en-ZA")} ${d.date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}`, cx, y, { align: "center" });
+  y += lineH - 1;
+  doc.setFontSize(7);
+  doc.text(`Cashier: ${d.cashier}`, cx, y, { align: "center" });
   y += lineH;
   doc.line(4, y, width - 4, y);
   y += lineH;
