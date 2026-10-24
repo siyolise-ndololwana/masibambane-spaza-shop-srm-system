@@ -30,6 +30,9 @@ function CustomerOrdersPage() {
   const [form, setForm] = useState({ customer_name: "", product_id: "", quantity: "", unit_price: "", payment_method: "Cash", delivery_date: "", notes: "" });
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [payFor, setPayFor] = useState<string | null>(null);
+  const [payForm, setPayForm] = useState({ amount: "", reference: "" });
+  const [payConfirmOpen, setPayConfirmOpen] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["customer_orders"],
