@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { BarChart3, ShieldCheck, ClipboardList, History, LogOut, Truck, Wallet, Settings } from "lucide-react";
+import { BarChart3, ShieldCheck, ClipboardList, History, LogOut, Truck, Wallet, Settings, ShoppingBasket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/menu")({
 const items = [
   { to: "/reports", label: "Monthly reports", desc: "Sales charts and summary", icon: BarChart3 },
   { to: "/orders", label: "Stock orders", desc: "Order from suppliers with deadlines", icon: ClipboardList },
+  { to: "/customer-orders", label: "Customer orders", desc: "Take customer orders with delivery dates", icon: ShoppingBasket },
   { to: "/activity", label: "Stock activity log", desc: "Who changed stock, when and why", icon: History },
   { to: "/expenses", label: "Expenses", desc: "Record and total shop costs", icon: Wallet },
   { to: "/suppliers", label: "Suppliers", desc: "Orders, pending deliveries and costs", icon: Truck },
