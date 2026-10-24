@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_orders: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_name: string
+          delivery_date: string
+          id: string
+          notes: string | null
+          payment_method: string
+          product_id: string
+          quantity: number
+          status: string
+          unit_price: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name: string
+          delivery_date: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          product_id: string
+          quantity: number
+          status?: string
+          unit_price?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string
+          delivery_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          product_id?: string
+          quantity?: number
+          status?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
