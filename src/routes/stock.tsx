@@ -9,6 +9,8 @@ import { rand } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ProductImage } from "@/components/ProductImage";
+import { ConfirmRecord } from "@/components/ConfirmRecord";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +24,8 @@ export const Route = createFileRoute("/stock")({
   head: () => ({
     meta: [
       { title: "Stock Levels — Masibambane Spaza" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -74,9 +78,9 @@ function StockPage() {
   return (
     <AppShell>
       <div className="space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold">Stock</h2>
+            <h2 className="text-3xl font-semibold">Stock cupboard</h2>
             <p className="text-xs text-muted-foreground">{products?.length ?? 0} products</p>
           </div>
           <div className="flex gap-2">
@@ -92,21 +96,21 @@ function StockPage() {
           className="bg-surface"
         />
 
-        <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-          {filtered.map((p, i) => {
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {filtered.map((p) => {
             const low = p.quantity <= p.reorder_level;
             return (
               <div
                 key={p.id}
-                className={`flex items-center justify-between p-4 ${i > 0 ? "border-t border-border" : ""}`}
+                className="overflow-hidden rounded-lg border border-border bg-surface shadow-card"
               >
-                <div className="min-w-0 flex-1 pr-3">
-                  <p className="truncate text-sm font-semibold">{p.name}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {p.category} • {rand(p.selling_price)}
-                  </p>
+                <ProductImage name={p.name} />
+                <div className="px-3 pt-3">
+                  <p className="text-xs text-muted-foreground">{p.category}</p>
+                  <h3 className="mt-1 min-h-10 break-words text-sm font-semibold">{p.name}</h3>
+                  <p className="mt-2 text-lg font-bold">{rand(p.selling_price)}</p>
                 </div>
-                <div className="text-right">
+                <div className="p-3">
                   <p
                     className={
                       p.quantity === 0
@@ -259,6 +263,7 @@ function ReceiveStockDialog({
   const [quantity, setQuantity] = useState("");
   const [unitCost, setUnitCost] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { data: suppliers } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
@@ -280,6 +285,7 @@ function ReceiveStockDialog({
     },
     onSuccess: () => {
       toast.success("Delivery recorded and stock updated");
+      setConfirmOpen(false);
       setOpen(false);
       setProductId("");
       setQuantity("");
@@ -290,7 +296,7 @@ function ReceiveStockDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <><Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           Receive stock
@@ -354,14 +360,18 @@ function ReceiveStockDialog({
         <DialogFooter>
           <Button
             className="w-full"
-            disabled={!productId || !quantity || mutation.isPending}
-            onClick={() => mutation.mutate()}
+            disabled={!productId || Number(quantity) <= 0 || mutation.isPending}
+            onClick={() => setConfirmOpen(true)}
           >
             Save delivery
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <ConfirmRecord open={confirmOpen} onOpenChange={setConfirmOpen} title="Confirm stock receipt"
+      description={`Add ${quantity} × ${products.find((p) => p.id === productId)?.name ?? "product"} to stock, costing ${rand(Number(quantity) * Number(unitCost || 0))}? This will update stock and the activity log.`}
+      pending={mutation.isPending} onConfirm={() => mutation.mutate()} />
+    </>
   );
 }
 
@@ -392,9 +402,9 @@ function ThresholdDialog({ product, onDone }: { product: ProductRow; onDone: () 
       }}
     >
       <DialogTrigger asChild>
-        <button className="text-[10px] font-semibold text-primary underline-offset-2 hover:underline">
+        <Button variant="link" size="sm" className="h-auto p-0 text-xs">
           Alert at {product.reorder_level} ✎
-        </button>
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
