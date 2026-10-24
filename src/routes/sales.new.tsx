@@ -9,6 +9,8 @@ import { AppShell } from "@/components/AppShell";
 import { rand } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProductImage } from "@/components/ProductImage";
+import { ConfirmRecord } from "@/components/ConfirmRecord";
 
 export const Route = createFileRoute("/sales/new")({
   head: () => ({
@@ -33,6 +35,7 @@ function NewSalePage() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [payment, setPayment] = useState("Cash");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -49,8 +52,7 @@ function NewSalePage() {
 
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
   const lines = Object.entries(cart)
-    .map(([id, q]) => ({ p: byId.get(id)!, q }))
-    .filter((l) => l.p);
+    .flatMap(([id, q]) => { const p = byId.get(id); return p ? [{ p, q }] : []; });
   const total = lines.reduce((s, l) => s + l.q * Number(l.p.selling_price), 0);
 
   const setQty = (id: string, q: number) =>
@@ -64,9 +66,10 @@ function NewSalePage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error("Please sign in before recording a sale.");
       const { data: sale, error } = await supabase
         .from("sales")
-        .insert({ user_id: user!.id, payment_method: payment, total_amount: total })
+        .insert({ user_id: user.id, payment_method: payment, total_amount: total })
         .select("id")
         .single();
       if (error) throw error;
@@ -84,6 +87,7 @@ function NewSalePage() {
       return lines.filter((l) => l.p.quantity - l.q <= l.p.reorder_level).map((l) => l.p.name);
     },
     onSuccess: (low) => {
+      setConfirmOpen(false);
       toast.success(`Sale saved — ${rand(total)}`);
       low.forEach((n) => toast.warning(`Low stock: ${n}`));
       qc.invalidateQueries();
@@ -98,21 +102,21 @@ function NewSalePage() {
   return (
     <AppShell>
       <div className="space-y-5">
-        <h2 className="text-xl font-bold">New sale</h2>
+        <h2 className="text-3xl font-semibold">At the counter</h2>
         <Input placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} className="bg-surface" />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {filtered.map((p) => (
-            <button
+            <Button variant="outline"
               key={p.id}
               disabled={p.quantity === 0}
               onClick={() => setQty(p.id, (cart[p.id] ?? 0) + 1)}
-              className="rounded-xl border border-border bg-surface p-3 text-left disabled:opacity-40"
+              className="h-auto flex-col items-stretch justify-start overflow-hidden whitespace-normal rounded-lg bg-surface p-0 text-left disabled:opacity-40"
             >
-              <p className="truncate text-sm font-semibold">{p.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {rand(p.selling_price)} • {p.quantity} left
-              </p>
-            </button>
+              <ProductImage name={p.name} />
+              <div className="p-3"><p className="min-h-10 break-words text-sm font-semibold">{p.name}</p>
+              <p className="mt-2 text-lg font-bold">{rand(p.selling_price)}</p>
+              <p className="text-xs text-muted-foreground">{p.quantity} left</p></div>
+            </Button>
           ))}
         </div>
 
@@ -148,12 +152,15 @@ function NewSalePage() {
           </div>
           <div className="mt-4 flex items-center justify-between">
             <span className="text-lg font-bold">{rand(total)}</span>
-            <Button disabled={lines.length === 0 || mutation.isPending} onClick={() => mutation.mutate()}>
+            <Button disabled={lines.length === 0 || mutation.isPending} onClick={() => setConfirmOpen(true)}>
               Complete sale
             </Button>
           </div>
         </div>
       </div>
+      <ConfirmRecord open={confirmOpen} onOpenChange={setConfirmOpen} title="Confirm sale recording"
+        description={`Record ${lines.reduce((sum, line) => sum + line.q, 0)} items for ${rand(total)}, paid by ${payment}? Stock quantities and the activity log will be updated.`}
+        pending={mutation.isPending} onConfirm={() => mutation.mutate()} />
     </AppShell>
   );
 }
