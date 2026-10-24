@@ -86,6 +86,25 @@ function CustomerOrdersPage() {
     qc.invalidateQueries();
   };
 
+  const confirmPayment = async () => {
+    if (!payFor) return;
+    const amount = Number(payForm.amount);
+    if (!(amount > 0)) { toast.error("Enter the amount the customer paid."); return; }
+    setPayConfirmOpen(false);
+    setBusy(true);
+    const { error } = await supabase.rpc("confirm_customer_payment", {
+      p_order_id: payFor,
+      p_amount: amount,
+      p_reference: payForm.reference.trim(),
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Payment saved to the income report and order completed");
+    setPayFor(null);
+    setPayForm({ amount: "", reference: "" });
+    qc.invalidateQueries();
+  };
+
   const today = new Date().toISOString().slice(0, 10);
   const sel = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
 
