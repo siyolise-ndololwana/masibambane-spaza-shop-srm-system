@@ -172,6 +172,15 @@ function CustomerOrdersPage() {
           onConfirm={place}
         />
 
+        <ConfirmRecord
+          open={payConfirmOpen}
+          onOpenChange={setPayConfirmOpen}
+          title="Confirm this customer payment?"
+          description={`${rand(Number(payForm.amount || 0))} will be saved in the income report and the order will be marked completed. This cannot be undone.`}
+          pending={busy}
+          onConfirm={confirmPayment}
+        />
+
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           {data?.orders.map((o, i) => {
             const late = o.status === "pending" && o.delivery_date < today;
