@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductImage } from "@/components/ProductImage";
 import { ConfirmRecord } from "@/components/ConfirmRecord";
+import { FakePaymentGate } from "@/components/FakePaymentGate";
 
 export const Route = createFileRoute("/sales/new")({
   head: () => ({
@@ -161,7 +162,20 @@ function NewSalePage() {
       </div>
       <ConfirmRecord open={confirmOpen} onOpenChange={setConfirmOpen} title="Confirm sale recording"
         description={`Record ${lines.reduce((sum, line) => sum + line.q, 0)} items for ${rand(total)}, paid by ${payment}? Stock quantities and the activity log will be updated.`}
-        pending={mutation.isPending} onConfirm={() => mutation.mutate()} />
+        pending={mutation.isPending}
+        onConfirm={() => {
+          if (payment === "Cash") mutation.mutate();
+          else { setConfirmOpen(false); setGateOpen(true); }
+        }} />
+      <FakePaymentGate
+        open={gateOpen}
+        onOpenChange={setGateOpen}
+        amount={total}
+        onPaid={(reference) => {
+          toast.success(`Payment approved (${reference})`);
+          mutation.mutate();
+        }}
+      />
     </AppShell>
   );
 }
