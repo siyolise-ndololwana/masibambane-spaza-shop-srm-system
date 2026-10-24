@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CustomerOrdersRouteImport } from './routes/customer-orders'
+import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrdersRouteImport } from './routes/orders'
@@ -44,6 +45,11 @@ const AuthRoute = AuthRouteImport.update({
 const CustomerOrdersRoute = CustomerOrdersRouteImport.update({
   id: '/customer-orders',
   path: '/customer-orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExpensesRoute = ExpensesRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
   '/customer-orders': typeof CustomerOrdersRoute
+  '/customers': typeof CustomersRoute
   '/expenses': typeof ExpensesRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
   '/customer-orders': typeof CustomerOrdersRoute
+  '/customers': typeof CustomersRoute
   '/expenses': typeof ExpensesRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
   '/customer-orders': typeof CustomerOrdersRoute
+  '/customers': typeof CustomersRoute
   '/expenses': typeof ExpensesRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/auth'
     | '/customer-orders'
+    | '/customers'
     | '/expenses'
     | '/menu'
     | '/orders'
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/auth'
     | '/customer-orders'
+    | '/customers'
     | '/expenses'
     | '/menu'
     | '/orders'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/auth'
     | '/customer-orders'
+    | '/customers'
     | '/expenses'
     | '/menu'
     | '/orders'
@@ -224,6 +236,7 @@ export interface RootRouteChildren {
   ActivityRoute: typeof ActivityRoute
   AuthRoute: typeof AuthRoute
   CustomerOrdersRoute: typeof CustomerOrdersRoute
+  CustomersRoute: typeof CustomersRoute
   ExpensesRoute: typeof ExpensesRoute
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/customer-orders'
       fullPath: '/customer-orders'
       preLoaderRoute: typeof CustomerOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/expenses': {
@@ -360,6 +380,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityRoute: ActivityRoute,
   AuthRoute: AuthRoute,
   CustomerOrdersRoute: CustomerOrdersRoute,
+  CustomersRoute: CustomersRoute,
   ExpensesRoute: ExpensesRoute,
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
