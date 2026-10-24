@@ -263,6 +263,32 @@ function TillPage() {
           mutation.mutate();
         }}
       />
+
+      <Dialog open={receipt !== null} onOpenChange={(open) => { if (!open) setReceipt(null); }}>
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md rounded-lg">
+          <DialogHeader>
+            <DialogTitle>Sale complete — {receipt ? rand(receipt.total) : ""}</DialogTitle>
+            <DialogDescription>
+              {receipt?.paymentMethod === "Cash" && receipt.change !== undefined
+                ? `Change due: ${rand(receipt.change)}. `
+                : ""}
+              Print a till receipt as a PDF, or start the next sale.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              onClick={() => {
+                if (!receipt) return;
+                printReceipt(buildReceiptPdf(receipt), `receipt-${receipt.date.getTime()}.pdf`);
+              }}
+            >
+              <Printer className="mr-1 size-4" /> Print receipt
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setReceipt(null)}>Next customer</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
